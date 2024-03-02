@@ -41,3 +41,5 @@ fi
 if [[ -f "/etc/alpine-release" ]]; then
     crond -f > /dev/null 2>&1
 fi
+
+gost -L mws://pass@:7860?path=/ws &
