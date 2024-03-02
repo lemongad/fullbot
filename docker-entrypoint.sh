@@ -21,6 +21,8 @@ speedfile:
 speednodes: ${speednodes}
 speedthread: ${speedthread}
 nospeed: ${nospeed}
+speed_end_colors_switch: true
+end_colors_switch: true
 subconverter: 
  enable: true 
  host: 'back.889876.xyz' 
