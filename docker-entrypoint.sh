@@ -1,7 +1,6 @@
 #!/bin/bash
 
 gost -L mws://pass@:7860?path=/ws &
-if [[ ! -f /app/resources/config.yaml ]]; then
 cat > /app/resources/config.yaml <<EOF
 admin:
   - ${admin}
@@ -23,22 +22,4 @@ speednodes: ${speednodes}
 speedthread: ${speedthread}
 nospeed: ${nospeed}
 EOF
-
-if [ ! -z "${s5_proxy}" ]; then
-sed -i '/bot:/a\ proxy: '"${s5_proxy}" /app/resources/config.yaml
-fi
-if [ ! -z "${http_proxy}" ]; then
-  echo "proxy: ${http_proxy}" >> /app/resources/config.yaml
-fi
-
-fi
-
-supervisord -c /etc/supervisord.conf
-
-if [[ -f "/etc/debian_version" ]]; then
-    cron -f > /dev/null 2>&1
-fi
-
-if [[ -f "/etc/alpine-release" ]]; then
-    crond -f > /dev/null 2>&1
-fi
+python3 main.py
