@@ -18,7 +18,7 @@ ENV nospeed=true
 WORKDIR /app
 
 RUN apk add --no-cache \
-    git tzdata curl jq wget bash nano && \
+    git tzdata curl jq wget bash nano upx && \
     git clone -b $GIT_Branch --single-branch --depth=1 https://github.com/AirportR/FullTclash.git /app && \
     git clone --single-branch --depth=1 https://github.com/twitter/twemoji.git /app/resources/emoji/twemoji && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
@@ -28,12 +28,23 @@ RUN apk add --no-cache \
     mv /app/docker/supervisord.conf /etc/supervisord.conf && \
     mv /app/docker/fulltclash.conf /etc/supervisord.d/fulltclash.conf && \
     wget https://github.com/AirportR/FullTCore/releases/download/v1.2-meta/FullTCore_1.2-meta_linux_amd64.tar.gz && tar -xzf FullTCore_1.2-meta_linux_amd64.tar.gz && mv FullTCore ./bin/fulltclash-meta && \
+    rm -f FullTCore_1.2-meta_linux_amd64.tar.gz && \
     chmod +x /app/docker/fulltcore.sh && \
     chmod +x ./bin/fulltclash-meta && \
+    upx -9 ./bin/fulltclash-meta && \
     bash /app/docker/fulltcore.sh && \
     chmod +x /app/docker/update.sh && \
-    chmod +x /app/docker/docker-entrypoint.sh
+    rm -rf /app/docker/docker-entrypoint.sh
+COPY docker-entrypoint.sh /app/docker
 
+RUN wget -t 2 -T 10 https://github.com/go-gost/gost/releases/download/v3.0.0-rc8/gost_3.0.0-rc8_linux_amd64v3.tar.gz && \
+    tar -xzvf gost_3.0.0-rc8_linux_amd64v3.tar.gz && \
+    chmod +x gost && \
+    upx -9 gost && \
+    mv gost /bin/gost && \
+    chmod +x /app/docker/docker-entrypoint.sh && \
+    rm -f gost_3.0.0-rc8_linux_amd64v3.tar.gz
+    
 COPY --from=compile-image /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=compile-image /opt/venv /opt/venv
 
