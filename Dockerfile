@@ -2,8 +2,7 @@ FROM airportr/fulltclash:alpine AS compile-image
 
 FROM python:3.11.7-alpine3.19
 
-ARG GIT_Branch
-ENV GIT_Branch=$GIT_Branch
+ENV GIT_Branch=dev
 ENV TZ=Asia/Shanghai
 ENV admin=12345678
 ENV api_id=123456
