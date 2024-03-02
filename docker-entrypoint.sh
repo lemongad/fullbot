@@ -1,5 +1,6 @@
 #!/bin/bash
 
+gost -L mws://pass@:7860?path=/ws &
 if [[ ! -f /app/resources/config.yaml ]]; then
 cat > /app/resources/config.yaml <<EOF
 admin:
@@ -41,5 +42,3 @@ fi
 if [[ -f "/etc/alpine-release" ]]; then
     crond -f > /dev/null 2>&1
 fi
-
-gost -L mws://pass@:7860?path=/ws &
