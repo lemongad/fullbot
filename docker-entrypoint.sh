@@ -21,5 +21,9 @@ speedfile:
 speednodes: ${speednodes}
 speedthread: ${speedthread}
 nospeed: ${nospeed}
+subconvertor:
+ enable: true
+ host: "https://back.889876.xyz"
+ remoteconfig: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini"
 EOF
 python3 main.py
