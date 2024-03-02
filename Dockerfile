@@ -1,43 +1,43 @@
-FROM golang:1.20.7-alpine AS builder
+FROM airportr/fulltclash:alpine AS compile-image
 
-WORKDIR /app/FullTCore
-RUN apk add --no-cache upx git
-RUN git clone -b meta https://github.com/AirportR/FullTCore.git /app/FullTCore && \
-    go build -tags with_gvisor -ldflags="-s -w" fulltclash.go && \
-    mkdir /app/FullTCore-file && \
-    cp /app/FullTCore/fulltclash /app/FullTCore-file/FullTCore && \
-    chmod +x /app/FullTCore-file/FullTCore && \
-    upx -9 /app/FullTCore-file/FullTCore
-# Download, extract, chmod and clean gost
-RUN wget -t 2 -T 10 https://github.com/go-gost/gost/releases/download/v3.0.0-rc8/gost_3.0.0-rc8_linux_amd64v3.tar.gz && \
-    tar -xzvf gost_3.0.0-rc8_linux_amd64v3.tar.gz && \
-    chmod +x gost && \
-    upx -9 gost && \
-    mv gost /bin/gost && \
-    rm -f gost_3.0.0-rc8_linux_amd64v3.tar.gz
+FROM python:3.11.7-alpine3.19
 
-FROM python:alpine3.18
+ARG GIT_Branch
+ENV GIT_Branch=$GIT_Branch
+ENV TZ=Asia/Shanghai
+ENV admin=12345678
+ENV api_id=123456
+ENV api_hash=ABCDEFG
+ENV bot_token=123456:ABCDEFG
+ENV branch=meta
+ENV core=4
+ENV startup=1124
+ENV speednodes=300
+ENV speedthread=4
+ENV nospeed=true
 
 WORKDIR /app
 
-ENV TZ=Asia/Shanghai
-ENV CORE=1
-ENV THREAD=4
-ENV PROXY=0
-
-COPY . /app
-
 RUN apk add --no-cache \
-    git gcc g++ make libffi-dev tzdata && \
-    pip3 install --no-cache-dir -r requirements.txt && \
-    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-    echo "Asia/Shanghai" > /etc/timezone && \
-    apk del gcc g++ make libffi-dev tzdata && \
-    rm -f bin/* *.md LICENSE /var/cache/apk/*
+    git tzdata curl jq wget bash nano && \
+    git clone -b $GIT_Branch --single-branch --depth=1 https://github.com/AirportR/FullTclash.git /app && \
+    git clone --single-branch --depth=1 https://github.com/twitter/twemoji.git /app/resources/emoji/twemoji && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
+    echo "00 6 * * * bash /app/docker/update.sh" >> /var/spool/cron/crontabs/root && \
+    mkdir /etc/supervisord.d && \
+    mv /app/docker/supervisord.conf /etc/supervisord.conf && \
+    mv /app/docker/fulltclash.conf /etc/supervisord.d/fulltclash.conf && \
+    wget https://github.com/AirportR/FullTCore/releases/download/v1.2-meta/FullTCore_1.2-meta_linux_amd64.tar.gz && tar -xzf FullTCore_1.2-meta_linux_amd64.tar.gz && mv FullTCore ./bin/fulltclash-meta && \
+    chmod +x /app/docker/fulltcore.sh && \
+    chmod +x ./bin/fulltclash-meta && \
+    bash /app/docker/fulltcore.sh && \
+    chmod +x /app/docker/update.sh && \
+    chmod +x /app/docker/docker-entrypoint.sh
 
-COPY --from=builder /app/FullTCore-file/* ./bin/
-# gost binary
-COPY --from=builder /bin/gost /bin/gost
+COPY --from=compile-image /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=compile-image /opt/venv /opt/venv
 
-RUN  chmod -R +x .
-ENTRYPOINT ["sh", "main.sh"]
+ENV PATH="/opt/venv/bin:$PATH"
+
+ENTRYPOINT ["/app/docker/docker-entrypoint.sh"]
